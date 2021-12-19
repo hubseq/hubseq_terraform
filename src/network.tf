@@ -28,7 +28,7 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = var.map_public_ip_on_launch
   availability_zone       = var.aws_azs[count.index]
 
-  tags = merge(local.common_tags, { Name = "${local.name_prefix}-private-subnet-${count.index}" })
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-public-subnet-${count.index}" })
 }
 
 # allocate Elastic IPs for the NAT gateways
