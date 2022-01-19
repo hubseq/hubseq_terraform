@@ -20,6 +20,17 @@ resource "aws_ecr_repository" "bwamem" {
   tags = merge(local.common_tags, { Name = "${local.name_prefix}-ecr-bwamem" })
 }
 
+resource "aws_ecr_repository" "bwamem_bam" {
+  name                 = "bwamem_bam"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-ecr-bwamem-bam" })
+}
+
 resource "aws_ecr_repository" "bcl2fastq" {
   name                 = "bcl2fastq"
   image_tag_mutability = "MUTABLE"
