@@ -16,12 +16,6 @@ variable "enable_dns_hostnames" {
   default     = true
 }
 
-variable "map_public_ip_on_launch" {
-  type        = bool
-  description = "Map a public IP address for Subnet instances"
-  default     = false
-}
-
 variable "vpc_cidr_block" {
   type        = string
   description = "Base CIDR Block for VPC"
@@ -50,4 +44,34 @@ variable "aws_azs" {
   type        = list(string)
   description = "AWS Available Zones to use"
   default     = ["us-west-2a", "us-west-2b", "us-west-2c", "us-west-2d"]
+}
+
+variable "batch_ami_id_tiny" {
+  type        = string
+  description = "AMI for Batch EC2 instances with 100GB storage"
+  default     = "ami-08576a4860f85fa6d"
+}
+
+variable "ecs_instance_role_policy_arn" {
+  type        = list(string)
+  description = "IAM Role Policiy to attach to instances run within Batch"
+  default     = ["arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role", "arn:aws:iam::aws:policy/AmazonS3FullAccess", "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"]
+}
+
+variable "ecs_batch_service_role_policy_arns" {
+  type        = list(string)
+  description = "IAM Role Policies for Batch to be able to start instances"
+  default     = ["arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess", "arn:aws:iam::aws:policy/AmazonS3FullAccess", "arn:aws:iam::aws:policy/CloudWatchFullAccess", "arn:aws:iam::aws:policy/AmazonECS_FullAccess", "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole", "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole"]
+}
+
+variable "batch_ec2_key" {
+  type        = string
+  description = "EC2 key pair for Batch instances"
+  default     = "npi_aws_batch"
+}
+
+variable "data_instance_ip1" {
+  type        = string
+  description = "Private IP for Instance for Data Analysis Dashboard 1"
+  default     = "10.88.1.27"
 }
