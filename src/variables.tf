@@ -1,9 +1,14 @@
 variable "naming_prefix" {
   type        = string
   description = "Naming prefix for resources"
-  default     = "npi-oregon-dev"
+  default     = "hubseq-oregon-dev"
 }
 
+variable "company_name" {
+  type        = string
+  description = "Company name for resources"
+  default     = "hubseq"
+}
 variable "aws_region" {
   type        = string
   description = "Region for AWS Resources"
@@ -74,4 +79,10 @@ variable "data_instance_ip1" {
   type        = string
   description = "Private IP for Instance for Data Analysis Dashboard 1"
   default     = "10.88.1.27"
+}
+
+variable "demo_instance_ip1" {
+  type        = string
+  description = "Private IP for Instance for Demo Instance 1"
+  default     = "10.88.0.152"
 }

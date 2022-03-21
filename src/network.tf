@@ -11,6 +11,7 @@ resource "aws_internet_gateway" "igw" {
   tags = merge(local.common_tags, { Name = "${local.name_prefix}-igw" })
 }
 
+/*
 resource "aws_subnet" "private_subnets" {
   count                   = var.vpc_subnet_count
   cidr_block              = var.vpc_cidr_range_private_subnets[count.index]
@@ -20,6 +21,7 @@ resource "aws_subnet" "private_subnets" {
 
   tags = merge(local.common_tags, { Name = "${local.name_prefix}-private-subnet-${count.index}" })
 }
+*/
 
 resource "aws_subnet" "public_subnets" {
   count                   = var.vpc_subnet_count
@@ -32,6 +34,7 @@ resource "aws_subnet" "public_subnets" {
 }
 
 # allocate Elastic IPs for the NAT gateways
+/*
 resource "aws_eip" "nat_gateway_eip" {
   vpc                     = true
 }
@@ -43,6 +46,7 @@ resource "aws_nat_gateway" "nat_gateway" {
 
   tags = merge(local.common_tags, { Name = "${local.name_prefix}-nat-gateway" })
 }
+*/
 
 # public route table - mapping of VPC CIDR block to local is added automatically
 resource "aws_route_table" "public_route_table" {
@@ -56,6 +60,7 @@ resource "aws_route_table" "public_route_table" {
   tags = merge(local.common_tags, { Name = "${local.name_prefix}-public-route-table" })
 }
 
+/*
 # private route table - internet-bound traffic goes through the NAT gateway first
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.vpc.id
@@ -67,12 +72,14 @@ resource "aws_route_table" "private_route_table" {
 
   tags = merge(local.common_tags, { Name = "${local.name_prefix}-private-route-table" })
 }
+*/
 
 # set main route table
-resource "aws_main_route_table_association" "rta-main" {
+resource "aws_main_route_table_association" "rta-main-public" {
   vpc_id         = aws_vpc.vpc.id
-  route_table_id = aws_route_table.private_route_table.id
+  route_table_id = aws_route_table.public_route_table.id
 }
+
 
 # s3 endpoint inside VPC - routes any S3-bound traffic to this endpoint instead of through NAT->IGW
 resource "aws_vpc_endpoint" "s3" {
@@ -87,6 +94,7 @@ resource "aws_route_table_association" "rta-public-subnets" {
   route_table_id = aws_route_table.public_route_table.id
 }
 
+/*
 resource "aws_route_table_association" "rta-private-subnets" {
   count          = var.vpc_subnet_count
   subnet_id      = aws_subnet.private_subnets[count.index].id
@@ -97,13 +105,14 @@ resource "aws_vpc_endpoint_route_table_association" "rta-s3-private" {
   route_table_id = aws_route_table.private_route_table.id
   vpc_endpoint_id = aws_vpc_endpoint.s3.id
 }
+*/
 
 resource "aws_vpc_endpoint_route_table_association" "rta-s3-public" {
   route_table_id = aws_route_table.public_route_table.id
   vpc_endpoint_id = aws_vpc_endpoint.s3.id
 }
 
-# reachable-from-vpc allows full access from inside the vpc
+# reachable-from-vpc allows full access to a resource if within the VPC.
 resource "aws_security_group" "reachable_from_vpc" {
   name   = "${local.name_prefix}-reachable-from-vpc"
   vpc_id = aws_vpc.vpc.id
@@ -166,6 +175,18 @@ resource "aws_security_group" "reachable_with_http" {
   ingress {
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 8082
+    to_port     = 8082
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -300,8 +321,8 @@ resource "aws_iam_role_policy_attachment" "aws_batch_service_role" {
 }
 
 
-resource "aws_batch_compute_environment" "batch_compute_tiny_jobs" {
-  compute_environment_name = "batch_compute_tiny_jobs"
+resource "aws_batch_compute_environment" "batch_compute_tiny_public" {
+  compute_environment_name = "batch_compute_tiny_public"
 
   compute_resources {
     # compute instances within Batch environment will have resource access governed by ECS instance role
@@ -322,7 +343,7 @@ resource "aws_batch_compute_environment" "batch_compute_tiny_jobs" {
 
     ec2_key_pair = var.batch_ec2_key
 
-    subnets = [for s in aws_subnet.private_subnets : s.id]
+    subnets = [for s in aws_subnet.public_subnets : s.id]
 
     type = "EC2"
 
@@ -335,16 +356,16 @@ resource "aws_batch_compute_environment" "batch_compute_tiny_jobs" {
 
   service_role = aws_iam_role.aws_batch_service_role.arn
   type         = "MANAGED"
-  depends_on   = [aws_iam_role_policy_attachment.aws_batch_service_role, aws_iam_instance_profile.ecs_instance_role, aws_internet_gateway.igw]
+  depends_on   = [aws_iam_role_policy_attachment.aws_batch_service_role, aws_iam_instance_profile.ecs_instance_role, aws_internet_gateway.igw, aws_security_group.reachable_from_vpc, aws_security_group.reachable_with_ssh]
 }
 
 
-resource "aws_batch_job_queue" "batch_scratch_queue" {
-  name     = "batch_scratch_queue"
+resource "aws_batch_job_queue" "batch_scratch_queue_public" {
+  name     = "batch_scratch_queue_public"
   state    = "ENABLED"
   priority = 1
   compute_environments = [
-    aws_batch_compute_environment.batch_compute_tiny_jobs.arn
+    aws_batch_compute_environment.batch_compute_tiny_public.arn
   ]
-  depends_on  = [aws_batch_compute_environment.batch_compute_tiny_jobs]
+  depends_on  = [aws_batch_compute_environment.batch_compute_tiny_public]
 }
