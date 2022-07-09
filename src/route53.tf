@@ -57,7 +57,7 @@ resource "aws_acm_certificate" "cert3_hubseq" {
   depends_on = [aws_route53_zone.main_hubseq]
 }
 
-
+/*
 resource "aws_route53_zone" "main" {
   name = "ngspipelines.com"
 }
@@ -74,7 +74,6 @@ resource "aws_acm_certificate" "cert" {
   depends_on = [aws_route53_zone.main]
 }
 
-/*
 resource "aws_acm_certificate" "cert2" {
   domain_name       = "data.ngspipelines.com"
   validation_method = "DNS"

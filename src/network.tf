@@ -321,7 +321,7 @@ resource "aws_iam_role_policy_attachment" "aws_batch_service_role" {
 }
 
 
-resource "aws_batch_compute_environment" "batch_compute_tiny_public" {
+resource "aws_batch_compute_environment" "batch_compute_tiny_public2" {
   compute_environment_name = "batch_compute_tiny_public"
 
   compute_resources {
@@ -330,7 +330,8 @@ resource "aws_batch_compute_environment" "batch_compute_tiny_public" {
 
     instance_type = [
       "m5.large",
-      "m5.xlarge"
+      "m5.xlarge",
+      "m5.2xlarge"
     ]
 
     max_vcpus = 256
@@ -360,12 +361,12 @@ resource "aws_batch_compute_environment" "batch_compute_tiny_public" {
 }
 
 
-resource "aws_batch_job_queue" "batch_scratch_queue_public" {
+resource "aws_batch_job_queue" "batch_scratch_queue_public2" {
   name     = "batch_scratch_queue_public"
   state    = "ENABLED"
   priority = 1
   compute_environments = [
-    aws_batch_compute_environment.batch_compute_tiny_public.arn
+    aws_batch_compute_environment.batch_compute_tiny_public2.arn
   ]
-  depends_on  = [aws_batch_compute_environment.batch_compute_tiny_public]
+  depends_on  = [aws_batch_compute_environment.batch_compute_tiny_public2]
 }
