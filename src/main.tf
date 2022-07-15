@@ -174,6 +174,11 @@ data "aws_iam_policy_document" "more_access_cognito" {
     actions   = ["s3:*"]
     resources = ["arn:aws:s3:::hubtenants/$${aws:PrincipalTag/teamid}/$${aws:PrincipalTag/userid}/*"]
     effect = "Allow"
+    condition {
+      test     = "StringLike"
+      variable = "aws:PrincipalTag/accesslevel"
+      values   = ["*userreadwritedelete*"]
+    }
   }
   statement {
     actions   = ["mobileanalytics:PutEvents",
